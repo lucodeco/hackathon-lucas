@@ -9,7 +9,7 @@ export const dataSourceOptions: DataSourceOptions = {
   synchronize: false,
   migrations: ['dist/db/migrations/*.js'],
   entities: ['dist/**/*.entity.js'],
-  ssl: false,
+  ssl: { rejectUnauthorized: false },
   // namingStrategy: new SnakeNamingStrategy(),
   logging: true,
 };

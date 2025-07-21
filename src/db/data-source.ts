@@ -10,14 +10,14 @@ export const dataSourceOptions: DataSourceOptions = {
   migrations: ['dist/db/migrations/*.js'],
   entities: ['dist/**/*.entity.js'],
   ssl: { rejectUnauthorized: false },
-  extra: {
-    // Force IPv4 connections and add timeout settings for cloud deployment
-    connectionTimeoutMillis: 30000,
-    query_timeout: 30000,
-    statement_timeout: 30000,
-    // Force IPv4 connections to avoid IPv6 connectivity issues in deployment
-    family: 4,
-  },
+  // extra: {
+  //   // Force IPv4 connections and add timeout settings for cloud deployment
+  //   connectionTimeoutMillis: 30000,
+  //   query_timeout: 30000,
+  //   statement_timeout: 30000,
+  //   // Force IPv4 connections to avoid IPv6 connectivity issues in deployment
+  //   family: 4,
+  // },
   // namingStrategy: new SnakeNamingStrategy(),
   logging: true,
 };

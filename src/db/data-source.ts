@@ -15,6 +15,8 @@ export const dataSourceOptions: DataSourceOptions = {
     connectionTimeoutMillis: 30000,
     query_timeout: 30000,
     statement_timeout: 30000,
+    // Force IPv4 connections to avoid IPv6 connectivity issues in deployment
+    family: 4,
   },
   // namingStrategy: new SnakeNamingStrategy(),
   logging: true,

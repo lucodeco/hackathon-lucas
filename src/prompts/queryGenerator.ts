@@ -22,7 +22,7 @@ columns:
 - interview_id Nullable(String),
 - transcript_id Nullable(String),
 - button_id Nullable(String),
-- is_organization_active Bool DEFAULT false,
+- is_organization_active Bool DEFAULT false, (true for existing clients, false for clients in pilot phase)
 - organization_type Enum8('consulting' = 1, 'investor' = 2) 
 
 DATA RANGE: 2025-01-01 to 2025-06-30

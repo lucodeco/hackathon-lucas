@@ -21,7 +21,9 @@ columns:
 - project_id Nullable(String),
 - interview_id Nullable(String),
 - transcript_id Nullable(String),
-- button_id Nullable(String)
+- button_id Nullable(String),
+- is_organization_active Bool DEFAULT false,
+- organization_type Enum8('consulting' = 1, 'investor' = 2) 
 
 DATA RANGE: 2025-01-01 to 2025-06-30
 
@@ -188,4 +190,7 @@ WHERE ilike(organization, 'IGS')
 GROUP BY toStartOfWeek(date)
 ORDER BY week;
 
-If the query is ambiguous or missing key information, include this in the 'assumptions' field.`;
+If the query is ambiguous or missing key information, include this in the 'assumptions' field.
+
+ALWAYS ENSURE THAT THE SQL IS VALID CLICKHOUSE SYNTAX!
+`;

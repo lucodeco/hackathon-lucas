@@ -7,23 +7,16 @@ export const prompt = `Generate a ClickHouse query based on the user query. Retu
 }
 
 Database Schema:
-table: public_user_log
+table: user_log
 columns:
-- id UUID,
-- email Nullable(String),
-- city Nullable(String),
-- country Nullable(String),
-- organization Nullable(String),
-- region Nullable(String),
-- event Nullable(String),
-- date Nullable(DateTime64(6)),
-- event_properties Nullable(String),
-- project_id Nullable(String),
-- interview_id Nullable(String),
-- transcript_id Nullable(String),
-- button_id Nullable(String),
-- is_organization_active Bool DEFAULT false, (true for existing clients, false for clients in pilot phase)
-- organization_type Enum8('consulting' = 1, 'investor' = 2) 
+- city String,
+- country String,
+- organization String,
+- email String,
+- event String,
+- date DateTime64(9), 
+- organization_type Enum8('consulting' = 1, 'investor' = 2), 
+- is_organization_active Bool (true for existing clients, false for clients in pilot phase)
 
 DATA RANGE: 2025-01-01 to 2025-06-30
 
@@ -57,20 +50,20 @@ SQL GENERATION RULES:
    ACTIVITY EVENTS = ['session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth']
    -- Active users (basic)
    SELECT COUNT(DISTINCT email) as active_users
-   FROM public_user_log
+   FROM user_log
    WHERE event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
      AND date >= '2025-06-01 00:00:00' AND date < '2025-07-01 00:00:00';
    -- 30-day retention analysis (early churn warning)
    WITH eligible_users AS (
      SELECT DISTINCT email, MIN(date) as signup_date
-     FROM public_user_log
+     FROM user_log
      WHERE date >= '2025-01-01 00:00:00'
      GROUP BY email
      HAVING MIN(date) <= '2025-05-31 00:00:00'  -- Signed up before May 31 (30 days before June 30)
    ),
    active_in_window AS (
      SELECT DISTINCT email
-     FROM public_user_log
+     FROM user_log
      WHERE event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
        AND date >= '2025-05-31 00:00:00' AND date <= '2025-06-30 23:59:59'  -- Last 30 days
    )
@@ -83,14 +76,14 @@ SQL GENERATION RULES:
    -- 70-day retention analysis (churn analysis)
    WITH eligible_users AS (
      SELECT DISTINCT email, MIN(date) as signup_date
-     FROM public_user_log
+     FROM user_log
      WHERE date >= '2025-01-01 00:00:00'
      GROUP BY email
      HAVING MIN(date) <= '2025-04-21 00:00:00'  -- Signed up before April 21 (70 days before June 30)
    ),
    active_in_window AS (
      SELECT DISTINCT email
-     FROM public_user_log
+     FROM user_log
      WHERE event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
        AND date >= '2025-04-21 00:00:00' AND date <= '2025-06-30 23:59:59'  -- Last 70 days
    )
@@ -118,7 +111,7 @@ SELECT
   organization,
   toStartOfMonth(date) as month,
   COUNT(DISTINCT email) as active_users
-FROM public_user_log
+FROM user_log
 WHERE date >= '2025-01-01 00:00:00' AND date < '2025-07-01 00:00:00'
   AND ilike(organization, '%CompanyName%')
   AND event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
@@ -126,7 +119,7 @@ GROUP BY organization, toStartOfMonth(date)
 ORDER BY month, organization;
 -- Specific button usage
 SELECT COUNT(DISTINCT email) as users
-FROM public_user_log
+FROM user_log
 WHERE ilike(event, 'button_click')
   AND ilike(button_id, 'click.v2.start-in-browser-recording%')
   AND date >= '2025-06-01 00:00:00' AND date < '2025-07-01 00:00:00';
@@ -137,7 +130,7 @@ User input to Custom GPT: "How many EY users were active last month"
 Custom GPT query: "Count of distinct users from EY who triggered activity events during June 2025. For activity analysis, use activity events: session_start, [Amplitude] Page Viewed, sign_in.sso, settings.sign_out, sign_in.oauth."
 Expected SQL:
 SELECT COUNT(DISTINCT email) as active_users
-FROM public_user_log
+FROM user_log
 WHERE ilike(organization, 'EY')
   AND event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
   AND date >= '2025-06-01 00:00:00' AND date < '2025-07-01 00:00:00';
@@ -147,7 +140,7 @@ Custom GPT query: "70-day retention analysis for Fairgrove organization showing 
 Expected SQL:
 WITH eligible_users AS (
   SELECT DISTINCT email
-  FROM public_user_log
+  FROM user_log
   WHERE ilike(organization, 'Fairgrove')
     AND date >= '2025-01-01 00:00:00'
   GROUP BY email
@@ -155,7 +148,7 @@ WITH eligible_users AS (
 ),
 active_in_window AS (
   SELECT DISTINCT email
-  FROM public_user_log
+  FROM user_log
   WHERE ilike(organization, 'Fairgrove')
     AND event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
     AND date >= '2025-04-21 00:00:00' AND date <= '2025-06-30 23:59:59'
@@ -172,7 +165,7 @@ User input to Custom GPT: "How many users clicked the start recording button in 
 Custom GPT query: "Count of distinct users who triggered 'button_click' event with button_id 'click.v2.start-in-browser-recording' during May 2025."
 Expected SQL:
 SELECT COUNT(DISTINCT email) as users
-FROM public_user_log
+FROM user_log
 WHERE ilike(event, 'button_click')
   AND ilike(button_id, 'click.v2.start-in-browser-recording%')
   AND date >= '2025-05-01 00:00:00' AND date < '2025-06-01 00:00:00';
@@ -183,7 +176,7 @@ Expected SQL:
 SELECT
   toStartOfWeek(date) as week,
   COUNT(DISTINCT email) as weekly_active_users
-FROM public_user_log
+FROM user_log
 WHERE ilike(organization, 'IGS')
   AND event IN ('session_start', '[Amplitude] Page Viewed', 'sign_in.sso', 'settings.sign_out', 'sign_in.oauth')
   AND date >= '2025-04-01 00:00:00' AND date < '2025-07-01 00:00:00'
